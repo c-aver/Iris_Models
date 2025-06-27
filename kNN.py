@@ -17,7 +17,7 @@ class KNNClassifier:
             return max(map(lambda tup: abs(tup[0] - tup[1]), zip(p1, p2)))
         return sum(map(lambda tup: abs(tup[0] - tup[1])**self.p, zip(p1, p2)))**(1/self.p)
 
-    def condense(self):
+    def condense(self) -> int:
         label1, label2 = tuple(list(set((p[1] for p in self.labelled_points))))
         labelled1 = list(point for (point, label) in self.labelled_points if label == label1)
         labelled2 = list(point for (point, label) in self.labelled_points if label == label2)
@@ -29,6 +29,7 @@ class KNNClassifier:
             if dist > eps:
                 t.append(p)
         self.labelled_points = t
+        return len(t)
 
     def fit(self, points: list[Point], labels: list[str]):
         self.d = len(points[0])
