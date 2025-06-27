@@ -19,9 +19,8 @@ def error_rate(classifier: KNNClassifier, X, y):
 
 
 # run one experiment with filtered data
-def experiment(data):
-    X: list[tuple[float, float]] = list((x['f2'], x['f3']) for (_, x) in data.iterrows())
-    y: list[str] = list(x['label'] for (_, x) in data.iterrows())
+def experiment(X, y):
+
 
     print(f"Starting experiment with classes: {set(y)}")
     # store results for each (k, p) pair
@@ -108,16 +107,18 @@ def experiment(data):
     best_condensed = min(results, key=lambda tup: results[tup][3])
     print(f"Best parameters when condensed are k = {best_condensed[0]}, p = {best_condensed[1]}")
 
+def filter_label_and_extract_X_y(data, label1, label2):
+    filtered_data = data.where((data['label'] == label1) | (data['label'] == label2)).dropna()
+    X: list[tuple[float, float]] = list((x['f2'], x['f3']) for (_, x) in filtered_data.iterrows())
+    y: list[str] = list(x['label'] for (_, x) in filtered_data.iterrows())
+    return X, y
 
 if __name__ == '__main__':
-    # read data from text file
+    # read data from text file, keep only feature 1, feature 2, label
     data = (pd.read_csv("iris.txt", sep=' ', names=["f1", "f2", "f3", "f4", "label"])
             .filter(items=["f2", "f3", "label"]))
+
     # for first experiment, filter only virginica and versicolor
-    filtered_data = (data.where((data['label'] == 'Iris-virginica') | (data['label'] == 'Iris-versicolor'))
-                     .dropna())
-    experiment(filtered_data)
+    experiment(*filter_label_and_extract_X_y(data, 'Iris-virginica', 'Iris-versicolor'))
     # for second experiment, filter only virginica and setosa
-    filtered_data = (data.where((data['label'] == 'Iris-virginica') | (data['label'] == 'Iris-setosa'))
-                     .dropna())
-    experiment(filtered_data)
+    experiment(*filter_label_and_extract_X_y(data, 'Iris-virginica', 'Iris-setosa'))
