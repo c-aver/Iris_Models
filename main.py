@@ -74,11 +74,11 @@ def experiment(X, y):
 
     # prepare data for plotting
     _x = ks
-    _y = [3 if p == '∞' else p for p in ps]
+    _y = [3 if p == '∞' else p for p in ps] # convert ∞ to 3 for proper coordinates
     _xx, _yy = np.meshgrid(_x, _y)
     x_coords, y_coords = _xx.ravel(), _yy.ravel()
     z_coords = [[], [], [], []]
-    for k, p in itertools.product(ks, ps):
+    for p, k in itertools.product(ps, ks):
         for i in range(4):
             z_coords[i].append(errors[(k, p)][i])
 
@@ -92,16 +92,24 @@ def experiment(X, y):
     axes[2].set_title('Train error rate (condensed)', fontsize=10)
     axes[3].set_title('Test error rate (condensed)', fontsize=10)
 
+    # for each error rate set
     for i in range(4):
-        axes[i].bar3d(x_coords, y_coords, np.zeros_like(z_coords[i]), 0.5, 0.5, z_coords[i], shade=True)
         ax = axes[i]
-        ax.set_xlabel('k')
+        # plot the corresponding data
+        ax.bar3d(x_coords, y_coords, np.zeros_like(z_coords[i]), 1, 0.5, z_coords[i], shade=True)
+        # set view point for easier viewing
+        ax.view_init(elev=30, azim=260)
+        # set x label and ticks
+        ax.set_xlabel('k', loc='left')
         ax.set_xticks(_x)
+        # set y label and ticks
         ax.set_ylabel('p')
         ax.set_yticks(_y)
+        # change 3rd label to ∞
         labels = [item.get_text() for item in ax.get_yticklabels()]
         labels[2] = '∞'
         ax.set_yticklabels(labels)
+        # set z label and bottom limit
         ax.set_zlabel('error')
         ax.set_zlim3d(bottom=0, top=None, auto=True)
 
@@ -109,10 +117,12 @@ def experiment(X, y):
     sizes_fig, ax = plt.subplots()
     # prepare data
     sizes = []
+    # extract size of each p with arbitrary k (k does not change condensed set size)
     for p in ps:
         sizes.append(condensed_sizes[(ks[0], p)])
     # prepare chart
     ax.set_title(f'Condensed set sizes for labels \n{set(y)}', fontsize=16)
+    # same as errors
     ax.bar([3 if p == '∞' else p for p in ps], sizes)
     ax.set_xlabel('p')
     ax.set_xticks(_y)
