@@ -98,7 +98,7 @@ def experiment(X, y):
         # plot the corresponding data
         ax.bar3d(x_coords, y_coords, np.zeros_like(z_coords[i]), 1, 0.5, z_coords[i], shade=True)
         # set view point for easier viewing
-        ax.view_init(elev=30, azim=260)
+        ax.view_init(elev=30, azim=250)
         # set x label and ticks
         ax.set_xlabel('k', loc='left')
         ax.set_xticks(_x)
