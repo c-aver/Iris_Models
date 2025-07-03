@@ -87,7 +87,7 @@ class DecisionTreeClassifier:
             else:
                 leaves.append((node, s, pos))
 
-        max_information_gain = -math.inf
+        max_information_gain = 0
         max_gain_replacement = None
         for leaf, s, pos in leaves:
             s_ent = entropy(s)
