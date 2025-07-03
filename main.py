@@ -7,22 +7,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from kNN import KNNClassifier
+from decisionTree import DecisionTreeClassifier
 
 # requested k and p values for testing
 ks: list[int] = [1, 3, 5, 7, 9]
 ps: list[int | Literal['∞']] = [1, 2, '∞']
 
 
-def error_rate(classifier: KNNClassifier, X, y):
+def error_rate(classifier: KNNClassifier | DecisionTreeClassifier, X, y):
     errors = sum(1 for point, label in zip(X, y) if (classifier.predict(point) != label))
     return errors / len(X)
 
 
 # run one experiment with filtered data
-def experiment(X, y):
-
-
-    print(f"Starting experiment with classes: {set(y)}")
+def knn_experiment(X, y):
+    print(f"Starting kNN experiment with classes: {set(y)}")
     # store errors for each (k, p) pair
     errors: dict[tuple[int, int | Literal['∞']], list[float]] = {}
     condensed_sizes: dict[tuple[int, int | Literal['∞']], float] = {}
@@ -31,7 +30,6 @@ def experiment(X, y):
         # 2: train error, 3: test error - after condensing
         errors[(k, p)] = [0, 0, 0, 0]
         condensed_sizes[(k, p)] = 0
-
 
     # repeat 100 times
     for i in range(100):
@@ -74,7 +72,7 @@ def experiment(X, y):
 
     # prepare data for plotting
     _x = ks
-    _y = [3 if p == '∞' else p for p in ps] # convert ∞ to 3 for proper coordinates
+    _y = [3 if p == '∞' else p for p in ps]  # convert ∞ to 3 for proper coordinates
     _xx, _yy = np.meshgrid(_x, _y)
     x_coords, y_coords = _xx.ravel(), _yy.ravel()
     z_coords = [[], [], [], []]
@@ -132,11 +130,11 @@ def experiment(X, y):
     ax.set_ylabel('set size')
     # make y limits be a little bigger that the range
     sizes_range = max(sizes) - min(sizes)
-    ax.set_ylim([min(sizes) - sizes_range/2, max(sizes) + sizes_range/2])
+    ax.set_ylim([min(sizes) - sizes_range / 2, max(sizes) + sizes_range / 2])
 
     # show all figures
     plt.show()
-
+    print("Produced plots")
 
     # find the best parameters for test error rate before and after condensing
     best_uncondensed = min(errors, key=lambda tup: errors[tup][1])
@@ -145,11 +143,33 @@ def experiment(X, y):
     print(f"Best parameters when condensed are k = {best_condensed[0]}, p = {best_condensed[1]}")
     print()
 
+
 def filter_label_and_extract_X_y(data, label1, label2):
     filtered_data = data.where((data['label'] == label1) | (data['label'] == label2)).dropna()
     X: list[tuple[float, float]] = list((x['f2'], x['f3']) for (_, x) in filtered_data.iterrows())
     y: list[str] = list(x['label'] for (_, x) in filtered_data.iterrows())
     return X, y
+
+
+def decision_tree_experiment(X, y):
+    print(f"Starting decision tree experiment")
+    y = [0 if l == 'Iris-virginica' else 1 for l in y]
+
+    errors = []
+    # repeat 50 times
+    for i in range(50):
+        # split data with different random state each time
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=i)
+
+        tree = DecisionTreeClassifier(3)
+        tree.fit(list(zip(X_train, y_train)))
+        errors.append((error_rate(tree, X_train, y_train), error_rate(tree, X_test, y_test)))
+
+    avg_empirical_error = sum(empirical for empirical, true in errors) / 50
+    avg_true_error = sum(true for empirical, true in errors) / 50
+    print(f"Average empirical error: {avg_empirical_error}")
+    print(f"Average true error: {avg_true_error}")
+
 
 if __name__ == '__main__':
     # read data from text file, keep only feature 1, feature 2, label
@@ -157,6 +177,8 @@ if __name__ == '__main__':
             .filter(items=["f2", "f3", "label"]))
 
     # for first experiment, filter only virginica and versicolor
-    experiment(*filter_label_and_extract_X_y(data, 'Iris-virginica', 'Iris-versicolor'))
+    knn_experiment(*filter_label_and_extract_X_y(data, 'Iris-virginica', 'Iris-versicolor'))
     # for second experiment, filter only virginica and setosa
-    experiment(*filter_label_and_extract_X_y(data, 'Iris-virginica', 'Iris-setosa'))
+    knn_experiment(*filter_label_and_extract_X_y(data, 'Iris-virginica', 'Iris-setosa'))
+
+    decision_tree_experiment(*filter_label_and_extract_X_y(data, 'Iris-virginica', 'Iris-versicolor'))
